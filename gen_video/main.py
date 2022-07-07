@@ -13,22 +13,22 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 # ocr 目录路径
-ocr_dir_path = r'C:\Users\admin\workplace\short-video-generate\BaiduImageSpider\ocr_result\funny_chat'
+ocr_dir_path = r'/Users/leo/videoGenerator/ocr_result/funny_chat'
 # 清理后的ocr结果
-clean_ocr_dir_path = r'C:\Users\admin\workplace\short-video-generate\gen_video\clean_ocr'
+clean_ocr_dir_path = r'/Users/leo/videoGenerator/gen_video/clean_ocr'
 # 生成聊天图片的目录
-gen_image_dir_path = r'C:\Users\admin\workplace\short-video-generate\gen_video\wechat_images'
+gen_image_dir_path = r'/Users/leo/videoGenerator/gen_video/wechat_images'
 # 生成视频的目录
-gen_video_dir_path = r'C:\Users\admin\workplace\short-video-generate\gen_video\wechat_videos'
-gen_video_dir_path2 = r'C:\Users\admin\workplace\short-video-generate\gen_video\wechat_videos2'
+gen_video_dir_path = r'/Users/leo/videoGenerator/gen_video/wechat_videos'
+gen_video_dir_path2 = r'/Users/leo/videoGenerator/gen_video/wechat_videos2'
 # 提取音频的目录
-sound_dir_path = r'C:\Users\admin\workplace\short-video-generate\gen_video\video_sounds'
+sound_dir_path = r'/Users/leo/videoGenerator/gen_video/video_sounds'
 
 def get_browser():
     url = 'http://127.0.0.1:5000/'
-    root_path = os.path.abspath(os.path.dirname(__file__))
-    chrome_driver_path = os.path.join(root_path, 'chromedriver.exe')
-    browser = webdriver.Chrome(executable_path=chrome_driver_path)
+    # root_path = os.path.abspath(os.path.dirname(__file__))
+    # chrome_driver_path = os.path.join(root_path, 'chromedriver')
+    browser = webdriver.Chrome()
     browser.get(url)
     return browser
 
@@ -108,10 +108,8 @@ def gen_wechat_image(browser):
     for ocr_file_name in os.listdir(clean_ocr_dir_path):
         ocr_file_path = os.path.join(clean_ocr_dir_path, ocr_file_name)
         with open(ocr_file_path, 'r', encoding='utf-8') as f:
-            ocr_json = f.read()
-        ocr_json_list = json.loads(ocr_json)
+            ocr_json_list = f.readlines()
         print(ocr_file_path)
-        print(ocr_json)
         ocr_file_gen_image_save_dir_path = os.path.join(gen_image_dir_path, ocr_file_name.split('.')[0])
         if not os.path.exists(ocr_file_gen_image_save_dir_path):
             os.makedirs(ocr_file_gen_image_save_dir_path)
@@ -130,11 +128,14 @@ def gen_wechat_image(browser):
 
         browser.execute_script("arguments[0].click();",
                                browser.find_element(by=By.XPATH, value='//*[@id="w2"]/div/div[3]/input[2]'))
+        num = 0
         for ocr_item in ocr_json_list:
-
-
-            postion = ocr_item.get('postion')
-            text = ocr_item.get('text')
+            num += 1
+            if (num % 2) == 0:
+                postion = 'left'
+            else:
+                postion = 'right'
+            text = ocr_item
             if not text:
                 continue
             if postion == 'right':
@@ -163,6 +164,7 @@ def gen_wechat_image(browser):
             with open(img_path, 'wb') as f:
                 f.write(img_data)
             print('img_path: ', img_path)
+            time.sleep(1)
             # 点击 返回继续修改
             browser.find_element(by=By.XPATH, value='/html/body/div[2]/div/a').click()
             i += 1
@@ -172,9 +174,12 @@ def gen_wechat_image(browser):
 def gen_video_from_image():
 
     for img_dir in os.listdir(gen_image_dir_path):
+        if(img_dir == '.DS_Store'):
+            continue
         video_path = os.path.join(gen_video_dir_path, f'{img_dir}.avi')
         image_folder = os.path.join(gen_image_dir_path, img_dir)
         images = [img for img in os.listdir(image_folder) if img.endswith(".jpeg")]
+        images.sort()
         if not images:
             continue
         frame = cv2.imread(os.path.join(image_folder, images[0]))
@@ -183,7 +188,7 @@ def gen_video_from_image():
 
         for image in images:
             video.write(cv2.imread(os.path.join(image_folder, image)))
-
+        video.write(cv2.imread(os.path.join(image_folder, image)))
         cv2.destroyAllWindows()
         video.release()
         print(f'{video_path} 生成成功！')
@@ -227,9 +232,9 @@ def add_sound_to_video():
 if __name__ == '__main__':
     create_dirs([gen_image_dir_path, gen_video_dir_path, clean_ocr_dir_path, sound_dir_path, gen_video_dir_path2])
     # get_ocr_json(ocr_dir_path)
-    # browser = get_browser()
-    # gen_wechat_image(browser)
-    # gen_video_from_image()
+    browser = get_browser()
+    gen_wechat_image(browser)
+    gen_video_from_image()
     # get_sound_from_video()
     # add_sound_to_video()
-    add_sound_to_video()
+    # add_sound_to_video()
