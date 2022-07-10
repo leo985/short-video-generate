@@ -188,6 +188,7 @@ def gen_video_from_image():
 
         for image in images:
             video.write(cv2.imread(os.path.join(image_folder, image)))
+            video.write(cv2.imread(os.path.join(image_folder, image)))
         video.write(cv2.imread(os.path.join(image_folder, image)))
         cv2.destroyAllWindows()
         video.release()
